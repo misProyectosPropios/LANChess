@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include "board.h"
+
+#include <stdio.h>
 
 static Piece empty_piece(void)
 {
@@ -46,10 +47,42 @@ void initializeClassicGame(Board *board)
     }
 }
 
+
+//Function that returns a set of all the possible movmenets of a given piece
+//It uses an scrupt PossibleMovements that it's: int length, Movements possibleMovements*
+void movements(BoardPosition position) {
+    // TODO: Implement logic to calculate possible movements for a piece at the given position
+    // This will involve checking the piece type and color, then scanning valid board squares.
+    
+}
+
+void move(Board *board, Movement movement) {
+    //Add movement verificaiton that there exists an already piece in board
+
+
+    //Add movement verification that the piece can move in the way correctly
+
+
+    //Add movement verificaiton that there no any other piece could capture the 
+
+    switch (board->squares[movement.from.row][movement.from.col].type) {
+    case PIECE_PAWN:
+    case PIECE_ROOK:
+    case PIECE_KNIGHT:
+    case PIECE_BISHOP:
+    case PIECE_QUEEN:
+    case PIECE_KING:
+        movePiece(board, movement);
+        break;
+    case PIECE_NONE:
+    default:
+        break;
+    }
+}
+
 void movePiece(Board *board, Movement movement)
 {
-    (void)board;
-
+    //Set to a function printMovement(movement, is_debug) separetad that with a flag is_debug print it or not
     printf(
         "movePiece called from row %d col %d to row %d col %d\n",
         movement.from.row,
@@ -57,4 +90,9 @@ void movePiece(Board *board, Movement movement)
         movement.to.row,
         movement.to.col
     );
+
+    
+    board->squares[movement.to.row][movement.to.col] =
+        board->squares[movement.from.row][movement.from.col];
+    board->squares[movement.from.row][movement.from.col] = empty_piece();
 }
