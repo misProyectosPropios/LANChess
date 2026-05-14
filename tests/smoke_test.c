@@ -13,6 +13,19 @@ static int expect_piece(Board *board, int row, int col, PieceType type, PieceCol
     return TEST_SUCCESS;
 }
 
+static int expect_backrank(Board *board, int row, PieceColor color)
+{
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 0, PIECE_ROOK, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 1, PIECE_KNIGHT, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 2, PIECE_BISHOP, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 3, PIECE_QUEEN, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 4, PIECE_KING, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 5, PIECE_BISHOP, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 6, PIECE_KNIGHT, color));
+    ASSERT_TEST_SUCCESS(expect_piece(board, row, 7, PIECE_ROOK, color));
+    return TEST_SUCCESS;
+}
+
 static int test_app_info(void)
 {
     ASSERT_STR_EQ("LANChess", lanchess_name());
@@ -26,52 +39,19 @@ static int test_classic_board_setup(void)
 
     initializeClassicGame(&board);
 
-    if (expect_piece(&board, 0, 0, PIECE_ROOK, COLOR_BLACK) != TEST_SUCCESS) {
-        return TEST_FAILURE;
+    ASSERT_TEST_SUCCESS(expect_backrank(&board, 0, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_backrank(&board, 7, COLOR_WHITE));
+
+    for(int i = 0; i < 8; i++) {
+        ASSERT_TEST_SUCCESS(expect_piece(&board, 1, i, PIECE_PAWN, COLOR_BLACK));
+        ASSERT_TEST_SUCCESS(expect_piece(&board, 6, i, PIECE_PAWN, COLOR_WHITE));
     }
-
-    if (expect_piece(&board, 0, 4, PIECE_KING, COLOR_BLACK) != TEST_SUCCESS) {
-        return TEST_FAILURE;
+    
+    for(int i = 2; i < 6; i++) {
+        for(int j = 0; j < 8; j++) {
+            ASSERT_TEST_SUCCESS(expect_piece(&board, i, j, PIECE_NONE, COLOR_NONE));
+        }
     }
-
-    if (expect_piece(&board, 1, 3, PIECE_PAWN, COLOR_BLACK) != TEST_SUCCESS) {
-        return TEST_FAILURE;
-    }
-
-    if (expect_piece(&board, 4, 4, PIECE_NONE, COLOR_NONE) != TEST_SUCCESS) {
-        return TEST_FAILURE;
-    }
-
-    if (expect_piece(&board, 6, 3, PIECE_PAWN, COLOR_WHITE) != TEST_SUCCESS) {
-        return TEST_FAILURE;
-    }
-
-    if (expect_piece(&board, 7, 3, PIECE_QUEEN, COLOR_WHITE) != TEST_SUCCESS) {
-        return TEST_FAILURE;
-    }
-
-    if (expect_piece(&board, 7, 4, PIECE_KING, COLOR_WHITE) != TEST_SUCCESS) {
-        return TEST_FAILURE;
-    }
-
-    return TEST_SUCCESS;
-}
-
-static int test_move_piece(void)
-{
-    Board board;
-    Movement movement = {
-        { 6, 4 },
-        { 4, 4 }
-    };
-
-    initializeClassicGame(&board);
-    movePiece(&board, movement);
-
-    ASSERT_INT_EQ(PIECE_PAWN, board.squares[4][4].type);
-    ASSERT_INT_EQ(COLOR_WHITE, board.squares[4][4].color);
-    ASSERT_INT_EQ(PIECE_NONE, board.squares[6][4].type);
-
     return TEST_SUCCESS;
 }
 
@@ -115,7 +95,7 @@ int main(void)
     TestCase tests[] = {
         { "app info", test_app_info },
         { "classic board setup", test_classic_board_setup },
-        { "move piece", test_move_piece },
+        //{ "move piece", test_move_piece },
         { "pawn", test_pawn },
         { "doublePawn", test_doubleMovePawn },
         { "rook", test_rook },

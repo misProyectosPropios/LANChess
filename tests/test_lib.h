@@ -24,6 +24,13 @@
         } \
     } while (0)
 
+#define ASSERT_TEST_SUCCESS(func_call) \
+    do { \
+        if ((func_call) != TEST_SUCCESS) { \
+            return TEST_FAILURE; \
+        } \
+    } while (0)
+
 typedef int (*TestFunction)(void);
 
 typedef struct {
