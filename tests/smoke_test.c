@@ -80,7 +80,7 @@ static int test_pawn(void)
     return TEST_SUCCESS;
 }
 
-static int test_pawnDoubleMove(void)
+static int test_doubleMovePawn(void)
 {
     return TEST_SUCCESS;
 }
@@ -117,6 +117,7 @@ int main(void)
         { "classic board setup", test_classic_board_setup },
         { "move piece", test_move_piece },
         { "pawn", test_pawn },
+        { "doublePawn", test_doubleMovePawn },
         { "rook", test_rook },
         { "knight", test_knight },
         { "bishop", test_bishop },

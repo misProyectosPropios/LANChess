@@ -34,11 +34,30 @@ typedef struct {
 } BoardPosition;
 
 typedef struct {
+    BoardPosition* relative;
+    int length;
+} RelativePosition;
+
+
+typedef struct {
     BoardPosition from;
     BoardPosition to;
 } Movement;
 
+typedef struct {
+    int length;
+    BoardPosition *possiblePositions;
+} PossiblePositions;
+
+typedef struct {
+    int length;
+    Movement *possibleMovements;
+} PossibleMovements;
+
 void initializeClassicGame(Board *board);
+PossiblePositions movements(Board *board, BoardPosition position);
 void movePiece(Board *board, Movement movement);
+
+void possiblePosition(PossiblePositions* movements, RelativePosition* relative, BoardPosition position);
 
 #endif
