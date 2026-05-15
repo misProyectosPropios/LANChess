@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -I src/common
+CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g -I src/common
 BUILD_DIR := build
 
 COMMON_SRC := src/common/app_info.c src/common/board.c
@@ -38,3 +38,9 @@ test: $(TEST_BIN)
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+debug: $(TEST_BIN)
+	gdb $(TEST_BIN)
+
+debug-client: $(CLIENT_BIN)
+	gdb $(CLIENT_BIN)
