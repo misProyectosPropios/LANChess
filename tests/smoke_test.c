@@ -26,6 +26,15 @@ static int expect_backrank(Board *board, int row, PieceColor color)
     return TEST_SUCCESS;
 }
 
+static void perform_move(int prevrow, int prevcol, int nextrow, int nextcol, Board *board)
+{
+    Movement movement = {
+        .from = { .row = prevrow, .col = prevcol },
+        .to = { .row = nextrow, .col = nextcol }
+    };
+    move(board, movement);
+}
+
 static int test_app_info(void)
 {
     ASSERT_STR_EQ("LANChess", lanchess_name());
@@ -57,36 +66,73 @@ static int test_classic_board_setup(void)
 
 static int test_pawn(void)
 {
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 2, 0, &board);
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 2, 0, PIECE_PAWN, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
 static int test_doubleMovePawn(void)
 {
+  Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 3, 0, &board);
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 3, 0, PIECE_PAWN, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
 static int test_rook(void)
 {
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 3, 0, &board);
+    perform_move(0, 0, 1, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_ROOK, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
 static int test_knight(void)
 {
+  Board board;
+    initializeClassicGame(&board);
+    perform_move(0, 1, 2, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_KNIGHT, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
 static int test_bishop(void)
 {
-    return TEST_SUCCESS;
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 1, 3, 0, &board);
+    perform_move(0, 3, 1, 1, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_BISHOP, COLOR_BLACK));
 }
 
 static int test_queen(void)
 {
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 3, 0, &board);
+    perform_move(0, 0, 1, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_ROOK, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
 static int test_king(void)
 {
+
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 3, 0, &board);
+    perform_move(0, 0, 1, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_ROOK, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
