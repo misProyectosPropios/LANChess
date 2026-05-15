@@ -57,7 +57,7 @@ typedef struct {
 void initializeClassicGame(Board *board);
 PossiblePositions movements(Board *board, BoardPosition position);
 void movePiece(Board *board, Movement movement);
-
+void move(Board *board, Movement movement);
 void possiblePosition(PossiblePositions* movements, RelativePosition* relative, BoardPosition position);
 
 #endif
