@@ -1,4 +1,4 @@
-#include "board.h"
+ #include "board.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,18 +78,39 @@ PossiblePositions movements(Board *board, BoardPosition position) {
     
     switch (piece.type) {
         case PIECE_PAWN:
+            BoardPosition* rel =  malloc(8 * sizeof(BoardPosition));
+            if (!rel) return result; 
+            
+            rel[0] = (BoardPosition){.row = 1, .col = 0};
+            rel[1] = (BoardPosition){.row = 2, .col = 0};
+            rel[2] = (BoardPosition){.row = -1, .col = 0};
+            rel[3] = (BoardPosition){.row = -2, .col = 0};
+            rel[4] = (BoardPosition){.row = 1, .col = 1};
+            rel[5] = (BoardPosition){.row = 1, .col = -1};
+            rel[6] = (BoardPosition){.row = -1, .col = 1};
+            rel[7] = (BoardPosition){.row = -1, .col = -1};
             relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
+                .length = 2,
+                .relative = rel
             };
             possiblePosition(&result, &relativePositions, position);
             break;
         case PIECE_ROOK:
-            relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
-            };
-            possiblePosition(&result, &relativePositions, position);
+            {
+                BoardPosition* relRook = malloc(28 * sizeof(BoardPosition));
+                if (!relRook) return result;
+                for (int i = 0; i < 7; i++) {
+                    relRook[i]      = (BoardPosition){.row =  (i + 1), .col = 0};
+                    relRook[i + 7]  = (BoardPosition){.row = -(i + 1), .col = 0};
+                    relRook[i + 14] = (BoardPosition){.row = 0,        .col =  (i + 1)};
+                    relRook[i + 21] = (BoardPosition){.row = 0,        .col = -(i + 1)};
+                }
+                relativePositions = (RelativePosition){
+                    .length = 28,
+                    .relative = relRook
+                };
+                possiblePosition(&result, &relativePositions, position);
+            }
             break;
         case PIECE_KNIGHT:
             relativePositions = (RelativePosition){
@@ -137,21 +158,12 @@ void possiblePosition(PossiblePositions* movements, RelativePosition* relative, 
             index++;
         }
     }
-}
-    
-    /*
-    int rowOffsets[] = {-1, -1, -1,  0, 0,  1, 1, 1};
-    int colOffsets[] = {-1,  0,  1, -1, 1, -1, 0, 1};
+    movements->length = index; // Set the actual number of valid positions found
 
-    for (int i = 0; i < 8; i++) {
-        int targetRow = position.row + rowOffsets[i];
-        int targetCol = position.col + colOffsets[i];
-        movements->possibleMovements[movements->length++].from = position;
-        movements->possibleMovements[movements->length++].to.row = targetRow;
-        movements->possibleMovements[movements->length++].to.col = targetCol;
+    if (relative->relative){
+        free(relative->relative);
     }
-    */
-
+}
 
 void move(Board *board, Movement movement) {
     Piece movingPiece = board->squares[movement.from.row][movement.from.col];
@@ -202,7 +214,6 @@ void movePiece(Board *board, Movement movement)
     // Separated printing logic with a debug flag
     printMovement(movement, true);
     
-    board->squares[movement.to.row][movement.to.col] =
-        board->squares[movement.from.row][movement.from.col];
+    board->squares[movement.to.row][movement.to.col] = board->squares[movement.from.row][movement.from.col];
     board->squares[movement.from.row][movement.from.col] = empty_piece();
 }
