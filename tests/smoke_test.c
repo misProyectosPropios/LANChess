@@ -70,6 +70,7 @@ static int test_pawn(void)
     initializeClassicGame(&board);
     perform_move(1, 0, 2, 0, &board);
     ASSERT_TEST_SUCCESS(expect_piece(&board, 2, 0, PIECE_PAWN, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_NONE, COLOR_NONE));
     return TEST_SUCCESS;
 }
 
@@ -99,7 +100,7 @@ static int test_knight(void)
     initializeClassicGame(&board);
     perform_move(0, 1, 2, 0, &board);
 
-    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_KNIGHT, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 2, 0, PIECE_KNIGHT, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
@@ -107,10 +108,10 @@ static int test_bishop(void)
 {
     Board board;
     initializeClassicGame(&board);
-    perform_move(1, 1, 3, 0, &board);
-    perform_move(0, 3, 1, 1, &board);
+    perform_move(1, 1, 3, 1, &board);
+    perform_move(0, 2, 1, 1, &board);
 
-    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_BISHOP, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 1, PIECE_BISHOP, COLOR_BLACK));
 }
 
 static int test_queen(void)
@@ -136,6 +137,18 @@ static int test_king(void)
     return TEST_SUCCESS;
 }
 
+
+static int test_movePieceOverSamePieceDoenstMoveIt() {
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(0, 0, 1, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 0, 0, PIECE_ROOK, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_PAWN, COLOR_BLACK));
+    return TEST_SUCCESS;
+
+}
+
 int main(void)
 {
     TestCase tests[] = {
@@ -148,7 +161,8 @@ int main(void)
         { "knight", test_knight },
         { "bishop", test_bishop },
         { "queen", test_queen },
-        { "king", test_king }
+        { "king", test_king },
+        { "movePieceOverSamePieceDoenstMoveIt", test_movePieceOverSamePieceDoenstMoveIt}
     };
 
     return run_tests(tests, TEST_COUNT(tests));
