@@ -15,3 +15,5 @@ build/
 
 # Ignore test binaries
 build/datastructures-test
+
+.gdb_history
