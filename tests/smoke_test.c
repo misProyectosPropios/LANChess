@@ -74,6 +74,17 @@ static int test_pawn(void)
     return TEST_SUCCESS;
 }
 
+static int test_pawnCannotMoveBackwards(void) {
+    
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(1, 0, 2, 0, &board);
+    perform_move(2, 0, 1, 0, &board);
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_PAWN, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 2, 0, PIECE_NONE, COLOR_NONE));
+    return TEST_SUCCESS;
+}
+
 static int test_doubleMovePawn(void)
 {
   Board board;
@@ -118,10 +129,10 @@ static int test_queen(void)
 {
     Board board;
     initializeClassicGame(&board);
-    perform_move(1, 0, 3, 0, &board);
-    perform_move(0, 0, 1, 0, &board);
+    perform_move(1, 3, 2, 3, &board);
+    perform_move(0, 3, 1, 3, &board);
 
-    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_ROOK, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 3, PIECE_QUEEN, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
@@ -130,10 +141,10 @@ static int test_king(void)
 
     Board board;
     initializeClassicGame(&board);
-    perform_move(1, 0, 3, 0, &board);
-    perform_move(0, 0, 1, 0, &board);
+    perform_move(1, 4, 2, 4, &board);
+    perform_move(0, 4, 1, 4, &board);
 
-    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_ROOK, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 4, PIECE_KING, COLOR_BLACK));
     return TEST_SUCCESS;
 }
 
@@ -146,7 +157,16 @@ static int test_movePieceOverSamePieceDoenstMoveIt() {
     ASSERT_TEST_SUCCESS(expect_piece(&board, 0, 0, PIECE_ROOK, COLOR_BLACK));
     ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_PAWN, COLOR_BLACK));
     return TEST_SUCCESS;
+}
 
+static int test_cannotMovePinnedPiece() {
+    Board board;
+    initializeClassicGame(&board);
+    perform_move(0, 0, 1, 0, &board);
+
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 0, 0, PIECE_ROOK, COLOR_BLACK));
+    ASSERT_TEST_SUCCESS(expect_piece(&board, 1, 0, PIECE_PAWN, COLOR_BLACK));
+    return TEST_SUCCESS;
 }
 
 int main(void)
@@ -154,15 +174,16 @@ int main(void)
     TestCase tests[] = {
         { "app info", test_app_info },
         { "classic board setup", test_classic_board_setup },
-        //{ "move piece", test_move_piece },
-        { "pawn", test_pawn },
-        { "doublePawn", test_doubleMovePawn },
+        { "pawn", test_pawn },        
+        { "doubleMovePawn", test_doubleMovePawn },
+        { "pawnCannotMoveBackwards", test_pawnCannotMoveBackwards },
         { "rook", test_rook },
         { "knight", test_knight },
         { "bishop", test_bishop },
         { "queen", test_queen },
         { "king", test_king },
-        { "movePieceOverSamePieceDoenstMoveIt", test_movePieceOverSamePieceDoenstMoveIt}
+        { "movePieceOverSamePieceDoenstMoveIt", test_movePieceOverSamePieceDoenstMoveIt },
+        { "cannotMovePinnedPiece", test_cannotMovePinnedPiece }
     };
 
     return run_tests(tests, TEST_COUNT(tests));
