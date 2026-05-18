@@ -1,31 +1,50 @@
 CC ?= gcc
-CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g -I src/common
+CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g -I src/common -I src/DataStructures
 BUILD_DIR := build
 
-COMMON_SRC := src/common/app_info.c src/common/board.c
-CLIENT_SRC := src/client/main.c $(COMMON_SRC)
-SERVER_SRC := src/server/main.c $(COMMON_SRC)
-TEST_SRC := tests/smoke_test.c $(COMMON_SRC)
+DS_OBJS := $(BUILD_DIR)/ArrayList.o $(BUILD_DIR)/Set.o
+COMMON_OBJS := $(BUILD_DIR)/app_info.o $(BUILD_DIR)/board.o $(DS_OBJS)
 
 CLIENT_BIN := $(BUILD_DIR)/lanchess-client
 SERVER_BIN := $(BUILD_DIR)/lanchess-server
 TEST_BIN := $(BUILD_DIR)/smoke-test
 
-.PHONY: all clean run-client run-server test
+# Test target for DataStructures
+DS_TEST_BIN := $(BUILD_DIR)/datastructures-test
 
-all: $(CLIENT_BIN) $(SERVER_BIN)
+# Debug target for DataStructures
+debug-dsa: $(DS_TEST_BIN)
+	gdb --args ./$(DS_TEST_BIN)
+
+# Search paths for source and header files
+vpath %.c src/common src/DataStructures src/client src/server tests
+vpath %.h src/common src/DataStructures
+
+.PHONY: all clean run-client run-server test datastructures
+
+all: datastructures $(CLIENT_BIN) $(SERVER_BIN)
+
+# Specific target to generate data structure objects
+datastructures: $(DS_OBJS)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(CLIENT_BIN): $(CLIENT_SRC) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(CLIENT_SRC) -o $(CLIENT_BIN)
+# Universal rule to compile object files from any directory in vpath
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(SERVER_BIN): $(SERVER_SRC) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(SERVER_SRC) -o $(SERVER_BIN)
+$(CLIENT_BIN): src/client/main.c $(COMMON_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $^ -o $(CLIENT_BIN)
 
-$(TEST_BIN): $(TEST_SRC) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(TEST_SRC) -o $(TEST_BIN)
+$(SERVER_BIN): src/server/main.c $(COMMON_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $^ -o $(SERVER_BIN)
+
+$(TEST_BIN): tests/smoke_test.c $(COMMON_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $^ -o $(TEST_BIN)
+
+$(DS_TEST_BIN): tests/ArrayListTest.c $(DS_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $^ -o $(DS_TEST_BIN)
 
 run-client: $(CLIENT_BIN)
 	./$(CLIENT_BIN)
@@ -35,6 +54,9 @@ run-server: $(SERVER_BIN)
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+test-datastructures: $(DS_TEST_BIN)
+	./$(DS_TEST_BIN)
 
 clean:
 	rm -rf $(BUILD_DIR)
