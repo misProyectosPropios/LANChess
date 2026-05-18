@@ -1,1 +1,17 @@
+# Ignore build artifacts
+build/
+*.o
+*.out
 *.exe
+
+# Ignore debug files
+*.log
+*.gdb
+
+# Ignore temporary files
+*.tmp
+*.swp
+.DS_Store
+
+# Ignore test binaries
+build/datastructures-test
