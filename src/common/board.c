@@ -67,6 +67,7 @@ static void printMovement(Movement movement, bool is_debug)
 PossiblePositions movements(Board *board, BoardPosition position) {
     PossiblePositions result = {0, NULL};
     RelativePosition relativePositions;
+    BoardPosition* rel;
     if (!is_on_board(position.row, position.col)) return result;
 
     Piece piece = board->squares[position.row][position.col];
@@ -78,7 +79,7 @@ PossiblePositions movements(Board *board, BoardPosition position) {
     
     switch (piece.type) {
         case PIECE_PAWN:
-            BoardPosition* rel =  malloc(8 * sizeof(BoardPosition));
+            rel =  malloc(8 * sizeof(BoardPosition));
             if (!rel) return result; 
             
             rel[0] = (BoardPosition){.row = 1, .col = 0};
@@ -97,46 +98,98 @@ PossiblePositions movements(Board *board, BoardPosition position) {
             break;
         case PIECE_ROOK:
             {
-                BoardPosition* relRook = malloc(28 * sizeof(BoardPosition));
-                if (!relRook) return result;
+                rel = malloc(28 * sizeof(BoardPosition));
+                if (!rel) return result;
                 for (int i = 0; i < 7; i++) {
-                    relRook[i]      = (BoardPosition){.row =  (i + 1), .col = 0};
-                    relRook[i + 7]  = (BoardPosition){.row = -(i + 1), .col = 0};
-                    relRook[i + 14] = (BoardPosition){.row = 0,        .col =  (i + 1)};
-                    relRook[i + 21] = (BoardPosition){.row = 0,        .col = -(i + 1)};
+                    rel[i]      = (BoardPosition){.row =  (i + 1), .col = 0};
+                    rel[i + 7]  = (BoardPosition){.row = -(i + 1), .col = 0};
+                    rel[i + 14] = (BoardPosition){.row = 0,        .col =  (i + 1)};
+                    rel[i + 21] = (BoardPosition){.row = 0,        .col = -(i + 1)};
                 }
                 relativePositions = (RelativePosition){
                     .length = 28,
-                    .relative = relRook
+                    .relative = rel
                 };
                 possiblePosition(&result, &relativePositions, position);
             }
             break;
         case PIECE_KNIGHT:
+            
+            rel =  malloc(8 * sizeof(BoardPosition));
+            if (!rel) return result; 
+            
+            rel[0] = (BoardPosition){.row = 1, .col = 2};
+            rel[1] = (BoardPosition){.row = 1, .col = -2};
+            rel[2] = (BoardPosition){.row = -1, .col = 2};
+            rel[3] = (BoardPosition){.row = -1, .col = -2};
+            rel[4] = (BoardPosition){.row = 2, .col = 1};
+            rel[5] = (BoardPosition){.row = 2, .col = -1};
+            rel[6] = (BoardPosition){.row = -2, .col = 1};
+            rel[7] = (BoardPosition){.row = -2, .col = -1};
+
+
             relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
+                .length = 8,
+                .relative = rel
             };
             possiblePosition(&result, &relativePositions, position);
             break;
         case PIECE_BISHOP:
+
+            rel =  malloc(28 * sizeof(BoardPosition));
+            if (!rel) return result; 
+
+            for(int i = 0; i < 7; i++) {
+                rel[i]      = (BoardPosition){.row = i, .col = i};
+                rel[i + 7]  = (BoardPosition){.row = i, .col = -i};
+                rel[i + 14] = (BoardPosition){.row = -i, .col = i};
+                rel[i + 21] = (BoardPosition){.row = -i, .col = -i};
+            }
+
             relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
+                .length = 28,
+                .relative = rel
             };
             possiblePosition(&result, &relativePositions, position);
             break;
         case PIECE_QUEEN:
+            rel =  malloc(56 * sizeof(BoardPosition));
+            if (!rel) return result; 
+
+            for(int i = 0; i < 7; i++) {
+                rel[i]      = (BoardPosition){.row = i,        .col = i};
+                rel[i + 7]  = (BoardPosition){.row = i,        .col = -i};
+                rel[i + 14] = (BoardPosition){.row = -i,       .col = i};
+                rel[i + 21] = (BoardPosition){.row = -i,       .col = -i};
+                rel[i + 28] = (BoardPosition){.row =  (i + 1), .col = 0};
+                rel[i + 35] = (BoardPosition){.row = -(i + 1), .col = 0};
+                rel[i + 42] = (BoardPosition){.row = 0,        .col =  (i + 1)};
+                rel[i + 49] = (BoardPosition){.row = 0,        .col = -(i + 1)};
+            }
+
+
             relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
+                .length = 56,
+                .relative = rel
             };
             possiblePosition(&result, &relativePositions, position);
             break;
         case PIECE_KING:
+            rel =  malloc(8 * sizeof(BoardPosition));
+            if (!rel) return result; 
+
+            rel[0] = (BoardPosition){.row = 1,  .col = 0};
+            rel[1] = (BoardPosition){.row = 1,  .col = 1};
+            rel[2] = (BoardPosition){.row = 1,  .col = -1};
+            rel[3] = (BoardPosition){.row = -1, .col = 1};
+            rel[4] = (BoardPosition){.row = -1, .col = -1};
+            rel[5] = (BoardPosition){.row = -1, .col = 0};
+            rel[6] = (BoardPosition){.row = 0,  .col = 1};
+            rel[7] = (BoardPosition){.row = 0,  .col = -1};
+
             relativePositions = (RelativePosition){
-                .length = 0,
-                .relative = NULL
+                .length = 8,
+                .relative = rel
             };
             possiblePosition(&result, &relativePositions, position);
             break;
@@ -144,6 +197,47 @@ PossiblePositions movements(Board *board, BoardPosition position) {
             break;
     }
     return result;
+}
+
+void pawnCannotMoveBackwards(BoardPosition* piecePosition, Piece* pawn, PossiblePositions* movements) {
+    //#TODO
+    if (pawn->color == COLOR_WHITE) {
+       // Remove any moves that go backwards
+      
+       for (int i = 0; i < movements->length; i++) {
+           if (movements->possiblePositions[i].row > piecePosition->row) {
+               // Shift remaining moves left
+               for (int j = i; j < movements->length - 1; j++) {
+                   movements->possiblePositions[j] = movements->possiblePositions[j + 1];
+               }
+               movements->length--;
+               i--; // Check the new move at this index
+           }
+       }
+    }
+    return;    
+}
+
+
+void moveCannotGoBeyondEnemies(Board* board, PossiblePositions* movements) {
+   //#TODO
+
+   return;
+ }
+
+void moveCannotGoBeyondAllies(Board* board, PossiblePositions* movements) {
+   //#TODO
+    return;
+}
+
+int isPinned(Board* board, Movement movement) {
+  //#TODO
+   return 1;
+}
+
+int cannotMovePinnedPiece(Board* board, PossiblePositions* positions, Movement movement) {
+   //#TODO
+   return 1;
 }
 
 void possiblePosition(PossiblePositions* movements, RelativePosition* relative, BoardPosition position) {
@@ -198,15 +292,9 @@ void move(Board *board, Movement movement) {
         return;
     }
 
-    switch (movingPiece.type) {
-    case PIECE_PAWN:
-    case PIECE_ROOK:
-        movePiece(board, movement);
-        break;
-    case PIECE_NONE:
-    default:
-        break;
-    }
+    if (movingPiece.type != PIECE_NONE) {
+       movePiece(board, movement);
+   }
 }
 
 void movePiece(Board *board, Movement movement)
