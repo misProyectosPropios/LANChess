@@ -4,22 +4,30 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct {
-    int *data;
-    size_t size;
-    size_t capacity;
-} ArrayList;
+/**
+ * Macro to declare the ArrayList structure and function prototypes.
+ * Use this in header files (.h).
+ */
+#define DECLARE_ARRAYLIST(T, Name) \
+typedef struct { \
+    T* data; \
+    size_t size; \
+    size_t capacity; \
+} ArrayList_##Name; \
+\
+ArrayList_##Name* createArray_##Name(); \
+void add_##Name(ArrayList_##Name *list, T value); \
+T get_##Name(ArrayList_##Name* list, int index); \
+bool contains_##Name(ArrayList_##Name* list, T value); \
+void freeList_##Name(ArrayList_##Name *list); \
+void destroy_##Name(ArrayList_##Name *list); \
+bool isEmpty_##Name(ArrayList_##Name *list); \
+void removeItem_##Name(ArrayList_##Name *list, int index); \
+void set_##Name(ArrayList_##Name *list, int index, T value); \
+size_t size_##Name(ArrayList_##Name *list); \
+void clear_##Name(ArrayList_##Name *list); \
+int indexOf_##Name(ArrayList_##Name* list, T value);
 
-ArrayList* createArray();
-void add(ArrayList *list, int value);
-int get(ArrayList *list, int index);
-bool contains(ArrayList *list, int value); 
-void freeList(ArrayList *list);
-bool isEmpty (ArrayList *list);
-void removeItem(ArrayList *list, int index);
-void set(ArrayList *list, int index, int value);
-size_t size(ArrayList *list);
-void clear(ArrayList *list);
+DECLARE_ARRAYLIST(int, Int)
 
-int indexOf(ArrayList* list, int value);
 #endif
