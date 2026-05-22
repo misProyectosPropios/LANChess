@@ -3,6 +3,8 @@
 
 #define LANCHESS_BOARD_SIZE 8
 
+#include <stdbool.h>
+
 typedef enum {
     PIECE_NONE = 0,
     PIECE_PAWN,
@@ -34,30 +36,35 @@ typedef struct {
 } BoardPosition;
 
 typedef struct {
-    BoardPosition* relative;
-    int length;
-} RelativePosition;
-
-
-typedef struct {
     BoardPosition from;
     BoardPosition to;
 } Movement;
 
+
+#include "ArrayList.h"
+
+DECLARE_ARRAYLIST(BoardPosition, BoardPosition)
+DECLARE_ARRAYLIST(Movement, Movement)
+
 typedef struct {
-    int length;
-    BoardPosition *possiblePositions;
+    ArrayList_BoardPosition* relative; // ArrayList of BoardPosition
+} RelativePosition;
+
+typedef struct {
+    ArrayList_BoardPosition* possiblePositions; // ArrayList of BoardPosition
 } PossiblePositions;
 
 typedef struct {
-    int length;
-    Movement *possibleMovements;
+    ArrayList_Movement* possibleMovements; // ArrayList of Movement
 } PossibleMovements;
 
 void initializeClassicGame(Board *board);
 PossiblePositions movements(Board *board, BoardPosition position);
 void movePiece(Board *board, Movement movement);
 void move(Board *board, Movement movement);
+void printBoard(Board *board);
+bool is_in_check(Board *board, PieceColor color);
+bool is_checkmate(Board *board, PieceColor color);
 void possiblePosition(PossiblePositions* movements, RelativePosition* relative, BoardPosition position);
 
 #endif
