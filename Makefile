@@ -8,6 +8,7 @@ COMMON_OBJS := $(BUILD_DIR)/app_info.o $(BUILD_DIR)/board.o $(DS_OBJS)
 CLIENT_BIN := $(BUILD_DIR)/lanchess-client
 SERVER_BIN := $(BUILD_DIR)/lanchess-server
 TEST_BIN := $(BUILD_DIR)/smoke-test
+CLI_BIN := $(BUILD_DIR)/chess-cli
 
 # Test target for DataStructures
 DS_TEST_BIN := $(BUILD_DIR)/datastructures-test
@@ -43,6 +44,9 @@ $(SERVER_BIN): src/server/main.c $(COMMON_OBJS) | $(BUILD_DIR)
 $(TEST_BIN): tests/smoke_test.c $(COMMON_OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $^ -o $(TEST_BIN)
 
+$(CLI_BIN): chess_cli.c $(COMMON_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $^ -o $(CLI_BIN)
+
 $(DS_TEST_BIN): tests/ArrayListTest.c $(DS_OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $^ -o $(DS_TEST_BIN)
 
@@ -51,6 +55,9 @@ run-client: $(CLIENT_BIN)
 
 run-server: $(SERVER_BIN)
 	./$(SERVER_BIN)
+
+run-cli: $(CLI_BIN)
+	./$(CLI_BIN)
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
