@@ -1,5 +1,6 @@
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g -I src/common -I src/DataStructures
+CLIENT_LDFLAGS ?= -lncurses
 BUILD_DIR := build
 
 DS_OBJS := $(BUILD_DIR)/ArrayList.o $(BUILD_DIR)/Set.o
@@ -36,7 +37,7 @@ $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(CLIENT_BIN): src/client/main.c $(COMMON_OBJS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $^ -o $(CLIENT_BIN)
+	$(CC) $(CFLAGS) $^ $(CLIENT_LDFLAGS) -o $(CLIENT_BIN)
 
 $(SERVER_BIN): src/server/main.c $(COMMON_OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $^ -o $(SERVER_BIN)
