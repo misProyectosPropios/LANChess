@@ -4,7 +4,7 @@
 #include "ArrayList.h"
 
 typedef struct Set {
-    ArrayList* elements;
+  ArrayList_Int* elements;
 } Set;
 
 Set* createSet(int capacity);
