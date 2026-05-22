@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "app_info.h"
+#include "board.h"
 
 #define BACKLOG 10
 #define BUFFER_SIZE 512
@@ -63,12 +64,85 @@ static int find_client_index_by_fd(const ClientConnection clients[], int count, 
 static int find_client_index_by_hostport(const ClientConnection clients[], int count,
                                          const char *host, const char *service)
 {
+    struct addrinfo hints;
+    struct addrinfo *target_res = NULL;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(host, service, &hints, &target_res) != 0) {
+        return -1;
+    }
+
     for (int i = 0; i < count; i++) {
-        if (strcmp(clients[i].host, host) == 0 && strcmp(clients[i].service, service) == 0) {
+        struct addrinfo *client_res = NULL;
+        if (getaddrinfo(clients[i].host, clients[i].service, &hints, &client_res) != 0) {
+            continue;
+        }
+
+        bool matched = false;
+        for (struct addrinfo *ta = target_res; ta != NULL && !matched; ta = ta->ai_next) {
+            for (struct addrinfo *ca = client_res; ca != NULL && !matched; ca = ca->ai_next) {
+                if (ta->ai_family == ca->ai_family && ta->ai_addrlen == ca->ai_addrlen &&
+                    memcmp(ta->ai_addr, ca->ai_addr, ta->ai_addrlen) == 0) {
+                    matched = true;
+                }
+            }
+        }
+
+        freeaddrinfo(client_res);
+
+        if (matched) {
+            freeaddrinfo(target_res);
+            return i;
+        }
+    }
+
+    freeaddrinfo(target_res);
+    return -1;
+}
+
+/* Game session management */
+#define MAX_GAMES (MAX_CLIENTS / 2)
+
+typedef struct {
+    bool active;
+    int white_fd;
+    int black_fd;
+    Board board;
+    PieceColor turn;
+} GameSession;
+
+static GameSession games[MAX_GAMES];
+
+static int find_game_index_by_fd(int fd)
+{
+    for (int i = 0; i < MAX_GAMES; i++) {
+        if (!games[i].active) continue;
+        if (games[i].white_fd == fd || games[i].black_fd == fd) return i;
+    }
+    return -1;
+}
+
+static int create_game(int white_fd, int black_fd)
+{
+    for (int i = 0; i < MAX_GAMES; i++) {
+        if (!games[i].active) {
+            games[i].active = true;
+            games[i].white_fd = white_fd;
+            games[i].black_fd = black_fd;
+            initializeClassicGame(&games[i].board);
+            games[i].turn = COLOR_WHITE;
             return i;
         }
     }
     return -1;
+}
+
+static void end_game(int idx)
+{
+    if (idx < 0 || idx >= MAX_GAMES) return;
+    games[idx].active = false;
 }
 
 static void build_peer_list(const ClientConnection clients[], int count, int self_fd,
@@ -235,6 +309,10 @@ int main(void)
                 if (send(client_fd, welcome, strlen(welcome), 0) == -1) {
                     perror("send");
                 }
+                const char *usage = "Commands:\n - GET_PEERS\n - CHALLENGE <host> <port>\n - ACCEPT_CHALLENGE\n - DECLINE_CHALLENGE\n - MOVE <r1> <c1> <r2> <c2>\n - quit\n";
+                if (send(client_fd, usage, strlen(usage), 0) == -1) {
+                    perror("send usage");
+                }
                 send_peer_list(client_fd, clients, client_count, client_fd);
             }
         }
@@ -321,9 +399,93 @@ int main(void)
 
                         send(challenger_fd, msg1, strlen(msg1), 0);
                         send(fd, msg2, strlen(msg2), 0);
+                        /* create game session: challenger is white, target is black */
+                        int game_idx = create_game(challenger_fd, fd);
+                        if (game_idx == -1) {
+                            const char *err = "START_GAME_FAILED\n";
+                            send(challenger_fd, err, strlen(err), 0);
+                            send(fd, err, strlen(err), 0);
+                        }
                     }
                 }
                 pending_challenger[target_idx] = -1;
+                continue;
+            }
+
+            if (strncmp(buffer, "MOVE ", 5) == 0) {
+                /* MOVE r1 c1 r2 c2 */
+                int r1, c1, r2, c2;
+                if (sscanf(buffer + 5, "%d %d %d %d", &r1, &c1, &r2, &c2) != 4) {
+                    const char *bad = "INVALID_MOVE_FORMAT\n";
+                    send(fd, bad, strlen(bad), 0);
+                    continue;
+                }
+
+                int game_idx = find_game_index_by_fd(fd);
+                if (game_idx == -1 || !games[game_idx].active) {
+                    const char *notin = "NOT_IN_GAME\n";
+                    send(fd, notin, strlen(notin), 0);
+                    continue;
+                }
+
+                GameSession *g = &games[game_idx];
+                PieceColor player_color = (g->white_fd == fd) ? COLOR_WHITE : COLOR_BLACK;
+                if (g->turn != player_color) {
+                    const char *notturn = "NOT_YOUR_TURN\n";
+                    send(fd, notturn, strlen(notturn), 0);
+                    continue;
+                }
+
+                BoardPosition from = {.row = r1, .col = c1};
+                BoardPosition to = {.row = r2, .col = c2};
+                Piece source_piece = g->board.squares[from.row][from.col];
+                if (source_piece.type == PIECE_NONE || source_piece.color != player_color) {
+                    const char *illegal = "ILLEGAL_MOVE\n";
+                    send(fd, illegal, strlen(illegal), 0);
+                    continue;
+                }
+
+                PossiblePositions poss = movements(&g->board, from);
+                bool legal = false;
+                for (size_t pi = 0; pi < size_BoardPosition(poss.possiblePositions); pi++) {
+                    BoardPosition p = get_BoardPosition(poss.possiblePositions, pi);
+                    if (p.row == to.row && p.col == to.col) {
+                        legal = true;
+                        break;
+                    }
+                }
+                destroy_BoardPosition(poss.possiblePositions);
+
+                if (!legal) {
+                    const char *illegal = "ILLEGAL_MOVE\n";
+                    send(fd, illegal, strlen(illegal), 0);
+                    continue;
+                }
+
+                Movement mv = {.from = from, .to = to};
+                movePiece(&g->board, mv);
+
+                /* flip turn */
+                g->turn = (g->turn == COLOR_WHITE) ? COLOR_BLACK : COLOR_WHITE;
+
+                /* notify opponent */
+                int opp_fd = (g->white_fd == fd) ? g->black_fd : g->white_fd;
+                char okmsg[BUFFER_SIZE];
+                snprintf(okmsg, sizeof(okmsg), "OPPONENT_MOVE %d %d %d %d\n", r1, c1, r2, c2);
+                send(opp_fd, okmsg, strlen(okmsg), 0);
+
+                const char *ok = "MOVE_OK\n";
+                send(fd, ok, strlen(ok), 0);
+
+                PieceColor opponent_color = (player_color == COLOR_WHITE) ? COLOR_BLACK : COLOR_WHITE;
+                if (is_checkmate(&g->board, opponent_color)) {
+                    char end_msg[BUFFER_SIZE];
+                    const char *winner = player_color == COLOR_WHITE ? "WHITE" : "BLACK";
+                    snprintf(end_msg, sizeof(end_msg), "GAME_END\nWINNER: %s\n", winner);
+                    send(fd, end_msg, strlen(end_msg), 0);
+                    send(opp_fd, end_msg, strlen(end_msg), 0);
+                    end_game(game_idx);
+                }
                 continue;
             }
 
