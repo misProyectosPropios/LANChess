@@ -7,6 +7,15 @@
 #define TEST_SUCCESS 0
 #define TEST_FAILURE 1
 
+#define ASSERT_NOT_NULL(ptr) \
+    do { \
+        if ((ptr) == NULL) { \
+            fprintf(stderr, "FAIL: %s:%d: Pointer is NULL\n", \
+                    __FILE__, __LINE__); \
+            return TEST_FAILURE; \
+        } \
+    } while (0)
+
 /* Library assertion macros */
 #define ASSERT_INT_EQ(expected, actual) \
     do { \
